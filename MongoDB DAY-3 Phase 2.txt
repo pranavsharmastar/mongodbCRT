@@ -1,0 +1,844 @@
+CODE 1:
+package com.example;
+
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Updates;
+import org.bson.Document;
+import org.bson.types.ObjectId;
+import io.github.cdimascio.dotenv.Dotenv;
+import java.util.Scanner;
+
+public class App {
+
+    public static void main(String[] args) {
+
+        Dotenv dotenv = Dotenv.configure()
+                .directory("D:/JAVA MONGODB CONN/mongodb-java-demo")
+                .ignoreIfMissing()
+                .load();
+
+        String uri = dotenv.get("MONGODB_URI");
+
+        if (uri == null || uri.isBlank()) {
+            System.out.println("Please set MONGODB_URI in your .env file.");
+            return;
+        }
+
+        try (
+            MongoClient client = MongoClients.create(uri);
+            Scanner sc = new Scanner(System.in)
+        ) {
+            MongoDatabase database = client.getDatabase("collegeDB");
+            MongoCollection<Document> students =
+                    database.getCollection("students");
+
+            database.runCommand(new Document("ping", 1));
+            System.out.println("MongoDB Atlas connected successfully!");
+
+            while (true) {
+                System.out.println("\n--- Student Management Menu ---");
+                System.out.println("1. Add Student");
+                System.out.println("2. View Students");
+                System.out.println("3. Update Student");
+                System.out.println("4. Delete Student");
+                System.out.println("5. Exit");
+                System.out.print("Enter choice: ");
+
+                if (!sc.hasNextInt()) {
+                    System.out.println("Invalid input! Enter a number.");
+                    sc.nextLine();
+                    continue;
+                }
+
+                int choice = sc.nextInt();
+                sc.nextLine();
+
+                switch (choice) {
+
+                    case 1: {
+                        System.out.print("Enter student name: ");
+                        String name = sc.nextLine();
+
+                        System.out.print("Enter age: ");
+                        if (!sc.hasNextInt()) {
+                            System.out.println("Age must be a number!");
+                            sc.nextLine();
+                            break;
+                        }
+                        int age = sc.nextInt();
+                        sc.nextLine();
+
+                        System.out.print("Enter course: ");
+                        String course = sc.nextLine();
+
+                        Document student = new Document("name", name)
+                                .append("age", age)
+                                .append("course", course);
+
+                        students.insertOne(student);
+                        System.out.println("Student added successfully!");
+                        System.out.println("Student ID: "
+                                + student.getObjectId("_id"));
+                        break;
+                    }
+
+                    case 2: {
+                        System.out.println("\n--- Student Records ---");
+
+                        boolean found = false;
+
+                        for (Document student : students.find()) {
+                            System.out.println(student.toJson());
+                            found = true;
+                        }
+
+                        if (!found) {
+                            System.out.println("No students found.");
+                        }
+                        break;
+                    }
+
+                    case 3: {
+                        System.out.print("Enter student ID to update: ");
+                        String id = sc.nextLine().trim();
+
+                        if (!ObjectId.isValid(id)) {
+                            System.out.println("Invalid student ID!");
+                            break;
+                        }
+
+                        ObjectId objectId = new ObjectId(id);
+
+                        Document existing = students.find(
+                                Filters.eq("_id", objectId)
+                        ).first();
+
+                        if (existing == null) {
+                            System.out.println("Student not found!");
+                            break;
+                        }
+
+                        System.out.println("Current record: "
+                                + existing.toJson());
+
+                        System.out.print("Enter new name: ");
+                        String name = sc.nextLine();
+
+                        System.out.print("Enter new age: ");
+                        if (!sc.hasNextInt()) {
+                            System.out.println("Age must be a number!");
+                            sc.nextLine();
+                            break;
+                        }
+                        int age = sc.nextInt();
+                        sc.nextLine();
+
+                        System.out.print("Enter new course: ");
+                        String course = sc.nextLine();
+
+                        students.updateOne(
+                                Filters.eq("_id", objectId),
+                                Updates.combine(
+                                        Updates.set("name", name),
+                                        Updates.set("age", age),
+                                        Updates.set("course", course)
+                                )
+                        );
+
+                        System.out.println("Student updated successfully!");
+                        break;
+                    }
+
+                    case 4: {
+                        System.out.print("Enter student ID to delete: ");
+                        String id = sc.nextLine().trim();
+
+                        if (!ObjectId.isValid(id)) {
+                            System.out.println("Invalid student ID!");
+                            break;
+                        }
+
+                        ObjectId objectId = new ObjectId(id);
+
+                        Document existing = students.find(
+                                Filters.eq("_id", objectId)
+                        ).first();
+
+                        if (existing == null) {
+                            System.out.println("Student not found!");
+                            break;
+                        }
+
+                        System.out.println("Student to delete: "
+                                + existing.toJson());
+                        System.out.print("Are you sure? (yes/no): ");
+
+                        String confirm = sc.nextLine().trim();
+
+                        if (confirm.equalsIgnoreCase("yes")) {
+                            students.deleteOne(
+                                    Filters.eq("_id", objectId)
+                            );
+                            System.out.println("Student deleted successfully!");
+                        } else {
+                            System.out.println("Deletion cancelled.");
+                        }
+                        break;
+                    }
+
+                    case 5:
+                        System.out.println("Exiting program...");
+                        return;
+
+                    default:
+                        System.out.println("Invalid choice!");
+                }
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+}
+
+
+OUTPUT 1:
+Oct 15, 2026 9:56:30 AM com.mongodb.internal.diagnostics.logging.Loggers shouldUseSLF4J
+WARNING: SLF4J not found on the classpath.  Logging is disabled for the 'org.mongodb.driver' component
+MongoDB connected successfully!
+Database selected: collegeDB
+Collection selected: students
+
+CODE 2:
+package com.example;
+
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Updates;
+import org.bson.Document;
+import org.bson.types.ObjectId;
+import io.github.cdimascio.dotenv.Dotenv;
+import java.util.Scanner;
+
+public class App {
+
+    public static void main(String[] args) {
+
+        Dotenv dotenv = Dotenv.configure()
+                .directory("D:/JAVA MONGODB CONN/mongodb-java-demo")
+                .ignoreIfMissing()
+                .load();
+
+        String uri = dotenv.get("MONGODB_URI");
+
+        if (uri == null || uri.isBlank()) {
+            System.out.println("Please set MONGODB_URI in your .env file.");
+            return;
+        }
+
+        try (
+            MongoClient client = MongoClients.create(uri);
+            Scanner sc = new Scanner(System.in)
+        ) {
+            MongoDatabase database = client.getDatabase("collegeDB");
+            MongoCollection<Document> students =
+                    database.getCollection("students");
+
+            database.runCommand(new Document("ping", 1));
+            System.out.println("MongoDB Atlas connected successfully!");
+
+            while (true) {
+                System.out.println("\n--- Student Management Menu ---");
+                System.out.println("1. Add Student");
+                System.out.println("2. View Students");
+                System.out.println("3. Update Student");
+                System.out.println("4. Delete Student");
+                System.out.println("5. Exit");
+                System.out.print("Enter choice: ");
+
+                if (!sc.hasNextInt()) {
+                    System.out.println("Invalid input! Enter a number.");
+                    sc.nextLine();
+                    continue;
+                }
+
+                int choice = sc.nextInt();
+                sc.nextLine();
+
+                switch (choice) {
+
+                   case 1: {
+                        System.out.print("Student ID: ");
+                        int studentId = sc.nextInt();
+                        sc.nextLine();
+
+                        System.out.print("Name: ");
+                        String name = sc.nextLine();
+
+                        System.out.print("Age: ");
+                        int age = sc.nextInt();
+                        sc.nextLine();
+
+                        System.out.print("Gender: ");
+                        String gender = sc.nextLine();
+
+                        System.out.print("Department: ");
+                        String department = sc.nextLine();
+
+                        System.out.print("Marks: ");
+                        int marks = sc.nextInt();
+                        sc.nextLine();
+
+                        System.out.print("City: ");
+                        String city = sc.nextLine();
+
+                        System.out.print("Skills (comma-separated): ");
+                        String[] skills = sc.nextLine().split("\\s*,\\s*");
+
+                        System.out.print("Active (true/false): ");
+                        boolean active = sc.nextBoolean();
+                        sc.nextLine();
+
+                        Document student = new Document("student_id", studentId)
+                                .append("name", name)
+                                .append("age", age)
+                                .append("gender", gender)
+                                .append("department", department)
+                                .append("marks", marks)
+                                .append("city", city)
+                                .append("skills", java.util.Arrays.asList(skills))
+                                .append("active", active);
+
+                        students.insertOne(student);
+                        System.out.println("Student added successfully!");
+                        break;
+                    }
+
+                    case 2: {
+                        System.out.println("\n--- Student Records ---");
+
+                        boolean found = false;
+
+                        for (Document student : students.find()) {
+                            System.out.println(student.toJson());
+                            found = true;
+                        }
+
+                        if (!found) {
+                            System.out.println("No students found.");
+                        }
+                        break;
+                    }
+
+                    case 3: {
+                        System.out.print("Enter student ID to update: ");
+                        int studentId = sc.nextInt();
+                        sc.nextLine();
+
+                        System.out.print("New name: ");
+                        String name = sc.nextLine();
+
+                        System.out.print("New age: ");
+                        int age = sc.nextInt();
+                        sc.nextLine();
+
+                        System.out.print("New gender: ");
+                        String gender = sc.nextLine();
+
+                        System.out.print("New department: ");
+                        String department = sc.nextLine();
+
+                        System.out.print("New marks: ");
+                        int marks = sc.nextInt();
+                        sc.nextLine();
+
+                        System.out.print("New city: ");
+                        String city = sc.nextLine();
+
+                        System.out.print("New skills (comma-separated): ");
+                        String[] skills = sc.nextLine().split("\\s*,\\s*");
+
+                        System.out.print("Active (true/false): ");
+                        boolean active = sc.nextBoolean();
+                        sc.nextLine();
+
+                        var result = students.updateOne(
+                                com.mongodb.client.model.Filters.eq("student_id", studentId),
+                                com.mongodb.client.model.Updates.combine(
+                                        com.mongodb.client.model.Updates.set("name", name),
+                                        com.mongodb.client.model.Updates.set("age", age),
+                                        com.mongodb.client.model.Updates.set("gender", gender),
+                                        com.mongodb.client.model.Updates.set("department", department),
+                                        com.mongodb.client.model.Updates.set("marks", marks),
+                                        com.mongodb.client.model.Updates.set("city", city),
+                                        com.mongodb.client.model.Updates.set(
+                                                "skills", java.util.Arrays.asList(skills)),
+                                        com.mongodb.client.model.Updates.set("active", active)
+                                )
+                        );
+
+                        System.out.println(result.getMatchedCount() > 0
+                                ? "Student updated successfully!"
+                                : "Student not found!");
+                        break;
+                    }
+
+                    case 4: {
+                        System.out.print("Enter student ID to delete: ");
+                        int studentId = sc.nextInt();
+                        sc.nextLine();
+
+                        Document existing = students.find(
+                                Filters.eq("student_id", studentId)
+                        ).first();
+
+                        if (existing == null) {
+                            System.out.println("Student not found!");
+                            break;
+                        }
+
+                        System.out.println("Student to delete: " + existing.toJson());
+                        System.out.print("Are you sure? (yes/no): ");
+
+                        String confirm = sc.nextLine().trim();
+
+                        if (confirm.equalsIgnoreCase("yes")) {
+                            students.deleteOne(Filters.eq("student_id", studentId));
+                            System.out.println("Student deleted successfully!");
+                        } else {
+                            System.out.println("Deletion cancelled.");
+                        }
+
+                        break;
+                    }
+
+                    case 5:
+                        System.out.println("Exiting program...");
+                        return;
+
+                    default:
+                        System.out.println("Invalid choice!");
+                }
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+}
+
+OUTPUT 2:
+Oct 15, 2026 10:10:48 AM com.mongodb.internal.diagnostics.logging.Loggers shouldUseSLF4J
+WARNING: SLF4J not found on the classpath.  Logging is disabled for the 'org.mongodb.driver' component
+MongoDB Atlas connected successfully!
+
+--- Student Management Menu ---
+1. Add Student
+2. View Students
+3. Update Student
+4. Delete Student
+5. Exit
+Enter choice: 1
+Student ID: 112
+Name: Uditi
+Age: 20
+Gender: Female
+Department: CSE
+Marks: 85
+City: Mumbai
+Skills (comma-separated): C, Python 
+Active (true/false): true
+Student added successfully!
+
+--- Student Management Menu ---
+1. Add Student
+2. View Students
+3. Update Student
+4. Delete Student
+5. Exit
+Enter choice: 2
+
+--- Student Records ---
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a3856"}, "student_id": 101, "name": "Aman", "age": 20, "gender": "Male", "department": "CSE", "marks": 85, "city": "Jaipur", "skills": ["Java", "MongoDB", "Python"], "active": true}
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a3857"}, "student_id": 102, "name": "Priya", "age": 22, "gender": "Female", "department": "ECE", "marks": 92, "city": "Delhi", "skills": ["Python", "C++"], "active": true}
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a3858"}, "student_id": 103, "name": "Rahul", "age": 21, "gender": "Male", "department": "CSE", "marks": 67, "city": "Jaipur", "skills": ["Java", "SQL"], "active": false}
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a3859"}, "student_id": 104, "name": "Neha", "age": 23, "gender": "Female","department": "IT", "marks": 76, "city": "Mumbai", "skills": ["MongoDB", "JavaScript", "Python"], "active": true}
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a385a"}, "student_id": 105, "name": "Rohit", "age": 19, "gender": "Male", "department": "CSE", "marks": 88, "city": "Delhi", "skills": ["C++", "Python"], "active": true}
+{"_id": {"$oid": "6ad059963fc15cfd3af64ad8"}, "student_id": 112, "name": "Uditi", "age": 20, "gender": "Female", "department": "CSE", "marks": 85, "city": "Mumbai", "skills": ["C", "Python"], "active": true}
+
+--- Student Management Menu ---
+1. Add Student
+2. View Students
+3. Update Student
+4. Delete Student
+5. Exit
+Enter choice: 3
+Enter student ID to update: 112
+New name: Nakul
+New age: 21
+New gender: Male
+New department: ECE
+New marks: 88
+New city: Delhi
+New skills (comma-separated): C++, ML
+Active (true/false): true
+Student updated successfully!
+
+--- Student Management Menu ---
+1. Add Student
+2. View Students
+3. Update Student
+4. Delete Student
+5. Exit
+Enter choice: 4
+Enter student ID to delete: 112
+Invalid student ID!
+
+--- Student Management Menu ---
+1. Add Student
+2. View Students
+3. Update Student
+4. Delete Student
+5. Exit
+Enter choice: 2
+
+--- Student Records ---
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a3856"}, "student_id": 101, "name": "Aman", "age": 20, "gender": "Male", "department": "CSE", "marks": 85, "city": "Jaipur", "skills": ["Java", "MongoDB", "Python"], "active": true}
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a3857"}, "student_id": 102, "name": "Priya", "age": 22, "gender": "Female", "department": "ECE", "marks": 92, "city": "Delhi", "skills": ["Python", "C++"], "active": true}
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a3858"}, "student_id": 103, "name": "Rahul", "age": 21, "gender": "Male", "department": "CSE", "marks": 67, "city": "Jaipur", "skills": ["Java", "SQL"], "active": false}
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a3859"}, "student_id": 104, "name": "Neha", "age": 23, "gender": "Female","department": "IT", "marks": 76, "city": "Mumbai", "skills": ["MongoDB", "JavaScript", "Python"], "active": true}
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a385a"}, "student_id": 105, "name": "Rohit", "age": 19, "gender": "Male", "department": "CSE", "marks": 88, "city": "Delhi", "skills": ["C++", "Python"], "active": true}
+{"_id": {"$oid": "6ad059963fc15cfd3af64ad8"}, "student_id": 112, "name": "Nakul", "age": 21, "gender": "Male", "department": "ECE", "marks": 88, "city": "Delhi", "skills": ["C++", "ML"], "active": true}
+
+--- Student Management Menu ---
+1. Add Student
+2. View Students
+3. Update Student
+4. Delete Student
+5. Exit
+Enter choice: 4
+Enter student ID to delete: 112
+Invalid student ID!
+
+--- Student Management Menu ---
+1. Add Student
+2. View Students
+3. Update Student
+4. Delete Student
+5. Exit
+Enter choice: 4
+Enter student ID to delete: 105
+Invalid student ID!
+
+--- Student Management Menu ---
+1. Add Student
+2. View Students
+3. Update Student
+4. Delete Student
+5. Exit
+Enter choice: 5
+Exiting program...
+PS D:\JAVA MONGODB CONN>  d:; cd 'd:\JAVA MONGODB CONN'; & 'C:\Users\ASUS\.vscode\extensions\redhat.java-1.57.0-win32-x64\jre\25.0.4.1-win32-x86_64\bin\java.exe' '@C:\Users\ASUS\AppData\Local\Temp\cp_c92dzpdgqrab6zxak6chs7q04.argfile' 'com.example.App' 
+Oct 15, 2026 10:17:24 AM com.mongodb.internal.diagnostics.logging.Loggers shouldUseSLF4J
+WARNING: SLF4J not found on the classpath.  Logging is disabled for the 'org.mongodb.driver' component
+MongoDB Atlas connected successfully!
+
+--- Student Management Menu ---
+1. Add Student
+2. View Students
+3. Update Student
+4. Delete Student
+5. Exit
+Enter choice: 4
+Enter student ID to delete: 112
+Student to delete: {"_id": {"$oid": "6ad059963fc15cfd3af64ad8"}, "student_id": 112, "name": "Nakul", "age": 21,"gender": "Male", "department": "ECE", "marks": 88, "city": "Delhi", "skills": ["C++", "ML"], "active": true}
+Are you sure? (yes/no): yes
+Student deleted successfully!
+
+--- Student Management Menu ---
+1. Add Student
+2. View Students
+3. Update Student
+4. Delete Student
+5. Exit
+Enter choice: 5
+Exiting program...
+
+CODE 3:
+package com.example;
+
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
+import org.bson.Document;
+import io.github.cdimascio.dotenv.Dotenv;
+
+import java.util.Scanner;
+
+public class App {
+    public static void main(String[] args) {
+
+        Dotenv dotenv = Dotenv.configure()
+                .directory("D:/JAVA MONGODB CONN/mongodb-java-demo")
+                .ignoreIfMissing()
+                .load();
+
+        String uri = dotenv.get("MONGODB_URI");
+
+        if (uri == null || uri.isBlank()) {
+            System.out.println("MONGODB_URI not found in .env file.");
+            return;
+        }
+
+        try (
+            MongoClient client = MongoClients.create(uri);
+            Scanner sc = new Scanner(System.in)
+        ) {
+            MongoDatabase database = client.getDatabase("collegeDB");
+            MongoCollection<Document> students =
+                    database.getCollection("students");
+
+            database.runCommand(new Document("ping", 1));
+            System.out.println("MongoDB connected successfully!");
+
+            while (true) {
+                System.out.println("\n--- Student Search Menu ---");
+                System.out.println("1. Search by Student ID");
+                System.out.println("2. Search by Department");
+                System.out.println("3. Search by Minimum Marks");
+                System.out.println("4. Search by Skill");
+                System.out.println("5. View All Students");
+                System.out.println("6. Exit");
+                System.out.print("Enter choice: ");
+
+                if (!sc.hasNextInt()) {
+                    System.out.println("Invalid choice!");
+                    sc.nextLine();
+                    continue;
+                }
+
+                int choice = sc.nextInt();
+                sc.nextLine();
+
+                switch (choice) {
+                    case 1: {
+                        System.out.print("Enter student ID: ");
+
+                        if (!sc.hasNextInt()) {
+                            System.out.println("Invalid student ID!");
+                            sc.nextLine();
+                            break;
+                        }
+
+                        int studentId = sc.nextInt();
+                        sc.nextLine();
+
+                        Document student = students.find(
+                                Filters.eq("student_id", studentId)
+                        ).first();
+
+                        if (student != null) {
+                            System.out.println(student.toJson());
+                        } else {
+                            System.out.println("Student not found.");
+                        }
+                        break;
+                    }
+
+                    case 2: {
+                        System.out.print("Enter department: ");
+                        String department = sc.nextLine().trim();
+
+                        showStudents(
+                                students,
+                                Filters.eq("department", department)
+                        );
+                        break;
+                    }
+
+                    case 3: {
+                        System.out.print("Enter minimum marks: ");
+
+                        if (!sc.hasNextInt()) {
+                            System.out.println("Invalid marks!");
+                            sc.nextLine();
+                            break;
+                        }
+
+                        int marks = sc.nextInt();
+                        sc.nextLine();
+
+                        showStudents(
+                                students,
+                                Filters.gte("marks", marks)
+                        );
+                        break;
+                    }
+
+                    case 4: {
+                        System.out.print("Enter skill: ");
+                        String skill = sc.nextLine().trim();
+
+                        showStudents(
+                                students,
+                                Filters.eq("skills", skill)
+                        );
+                        break;
+                    }
+
+                    case 5:
+                        showStudents(students, new Document());
+                        break;
+
+                    case 6:
+                        System.out.println("Exiting program...");
+                        return;
+
+                    default:
+                        System.out.println("Invalid choice!");
+                }
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private static void showStudents(
+            MongoCollection<Document> students,
+            org.bson.conversions.Bson filter) {
+
+        boolean found = false;
+
+        for (Document student : students.find(filter)) {
+            System.out.println(student.toJson());
+            found = true;
+        }
+
+        if (!found) {
+            System.out.println("No matching students found.");
+        }
+    }
+}
+
+OUTPUT 3:
+--- Student Management Menu ---
+1. Add Student
+2. View Students
+3. Update Student
+4. Delete Student
+5. Exit
+Enter choice: 4
+Enter student ID to delete: 112
+Student to delete: {"_id": {"$oid": "6ad059963fc15cfd3af64ad8"}, "student_id": 112, "name": "Nakul", "age": 21,"gender": "Male", "department": "ECE", "marks": 88, "city": "Delhi", "skills": ["C++", "ML"], "active": true}
+Are you sure? (yes/no): yes
+Student deleted successfully!
+
+--- Student Management Menu ---
+1. Add Student
+2. View Students
+3. Update Student
+4. Delete Student
+5. Exit
+Enter choice: 5
+Exiting program...
+PS D:\JAVA MONGODB CONN>  d:; cd 'd:\JAVA MONGODB CONN'; & 'C:\Users\ASUS\.vscode\extensions\redhat.java-1.57.0-win32-x64\jre\25.0.4.1-win32-x86_64\bin\java.exe' '@C:\Users\ASUS\AppData\Local\Temp\cp_c92dzpdgqrab6zxak6chs7q04.argfile' 'com.example.App' 
+Please set MONGODB_URI first.
+PS D:\JAVA MONGODB CONN>  d:; cd 'd:\JAVA MONGODB CONN'; & 'C:\Users\ASUS\.vscode\extensions\redhat.java-1.57.0-win32-x64\jre\25.0.4.1-win32-x86_64\bin\java.exe' '@C:\Users\ASUS\AppData\Local\Temp\cp_c92dzpdgqrab6zxak6chs7q04.argfile' 'com.example.App' 
+Oct 15, 2026 10:29:35 AM com.mongodb.internal.diagnostics.logging.Loggers shouldUseSLF4J
+WARNING: SLF4J not found on the classpath.  Logging is disabled for the 'org.mongodb.driver' component
+MongoDB connected successfully!
+
+--- Student Search Menu ---
+1. Search by Student ID
+2. Search by Department
+3. Search by Minimum Marks
+4. Search by Skill
+5. View All Students
+6. Exit
+Enter choice: 102
+Invalid choice!
+
+--- Student Search Menu ---
+1. Search by Student ID
+2. Search by Department
+3. Search by Minimum Marks
+4. Search by Skill
+5. View All Students
+6. Exit
+Enter choice: 1
+Enter student ID: 102
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a3857"}, "student_id": 102, "name": "Priya", "age": 22, "gender": "Female", "department": "ECE", "marks": 92, "city": "Delhi", "skills": ["Python", "C++"], "active": true}
+
+--- Student Search Menu ---
+1. Search by Student ID
+2. Search by Department
+3. Search by Minimum Marks
+4. Search by Skill
+5. View All Students
+6. Exit
+Enter choice: 2
+Enter department: CSE
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a3856"}, "student_id": 101, "name": "Aman", "age": 20, "gender": "Male", "department": "CSE", "marks": 85, "city": "Jaipur", "skills": ["Java", "MongoDB", "Python"], "active": true}
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a3858"}, "student_id": 103, "name": "Rahul", "age": 21, "gender": "Male", "department": "CSE", "marks": 67, "city": "Jaipur", "skills": ["Java", "SQL"], "active": false}
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a385a"}, "student_id": 105, "name": "Rohit", "age": 19, "gender": "Male", "department": "CSE", "marks": 88, "city": "Delhi", "skills": ["C++", "Python"], "active": true}
+
+--- Student Search Menu ---
+1. Search by Student ID
+2. Search by Department
+3. Search by Minimum Marks
+4. Search by Skill
+5. View All Students
+6. Exit
+Enter choice: 3
+Enter minimum marks: 85
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a3856"}, "student_id": 101, "name": "Aman", "age": 20, "gender": "Male", "department": "CSE", "marks": 85, "city": "Jaipur", "skills": ["Java", "MongoDB", "Python"], "active": true}
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a3857"}, "student_id": 102, "name": "Priya", "age": 22, "gender": "Female", "department": "ECE", "marks": 92, "city": "Delhi", "skills": ["Python", "C++"], "active": true}
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a385a"}, "student_id": 105, "name": "Rohit", "age": 19, "gender": "Male", "department": "CSE", "marks": 88, "city": "Delhi", "skills": ["C++", "Python"], "active": true}
+
+--- Student Search Menu ---
+1. Search by Student ID
+2. Search by Department
+3. Search by Minimum Marks
+4. Search by Skill
+5. View All Students
+6. Exit
+Enter choice: 4
+Enter skill: Python
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a3856"}, "student_id": 101, "name": "Aman", "age": 20, "gender": "Male", "department": "CSE", "marks": 85, "city": "Jaipur", "skills": ["Java", "MongoDB", "Python"], "active": true}
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a3857"}, "student_id": 102, "name": "Priya", "age": 22, "gender": "Female", "department": "ECE", "marks": 92, "city": "Delhi", "skills": ["Python", "C++"], "active": true}
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a3859"}, "student_id": 104, "name": "Neha", "age": 23, "gender": "Female","department": "IT", "marks": 76, "city": "Mumbai", "skills": ["MongoDB", "JavaScript", "Python"], "active": true}
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a385a"}, "student_id": 105, "name": "Rohit", "age": 19, "gender": "Male", "department": "CSE", "marks": 88, "city": "Delhi", "skills": ["C++", "Python"], "active": true}
+
+--- Student Search Menu ---
+1. Search by Student ID
+2. Search by Department
+3. Search by Minimum Marks
+4. Search by Skill
+5. View All Students
+6. Exit
+Enter choice: 5
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a3856"}, "student_id": 101, "name": "Aman", "age": 20, "gender": "Male", "department": "CSE", "marks": 85, "city": "Jaipur", "skills": ["Java", "MongoDB", "Python"], "active": true}
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a3857"}, "student_id": 102, "name": "Priya", "age": 22, "gender": "Female", "department": "ECE", "marks": 92, "city": "Delhi", "skills": ["Python", "C++"], "active": true}
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a3858"}, "student_id": 103, "name": "Rahul", "age": 21, "gender": "Male", "department": "CSE", "marks": 67, "city": "Jaipur", "skills": ["Java", "SQL"], "active": false}
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a3859"}, "student_id": 104, "name": "Neha", "age": 23, "gender": "Female","department": "IT", "marks": 76, "city": "Mumbai", "skills": ["MongoDB", "JavaScript", "Python"], "active": true}
+{"_id": {"$oid": "6acc87cf66a1c8cd5d8a385a"}, "student_id": 105, "name": "Rohit", "age": 19, "gender": "Male", "department": "CSE", "marks": 88, "city": "Delhi", "skills": ["C++", "Python"], "active": true}
+
+--- Student Search Menu ---
+1. Search by Student ID
+2. Search by Department
+3. Search by Minimum Marks
+4. Search by Skill
+5. View All Students
+6. Exit
+Enter choice: 6
+Exiting program...
