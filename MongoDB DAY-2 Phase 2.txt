@@ -274,12 +274,8 @@ Downloaded from central: https://repo.maven.apache.org/maven2/com/thoughtworks/q
 [INFO] Total time:  13.418 s
 [INFO] Finished at: 2026-10-13T09:20:33+05:30
 [INFO] ------------------------------------------------------------------------
-PS C:\Users\ASUS\JavaMongoDB\mongodb-demo> notepad src\main\java\com\example\App.java
-PS C:\Users\ASUS\JavaMongoDB\mongodb-demo> $env:MONGODB_URI = "mongodb+srv://mongosh "mongodb+srv://cluster0.35fwt2e.mongodb.net/" --apiVersion 1 --username 2024pceacspreksha126_db_user:i97MZ&tw@ev2Vt7-CLUSTER.mongodb.net/
->> cd C:\Users\ASUS\JavaMongoDB\mongodb-demo
->> notepad pom.xml
->> ^C
-PS C:\Users\ASUS\JavaMongoDB\mongodb-demo> mvn compile exec:java "-Dexec.mainClass=com.example.App"
+
+
 [INFO] Scanning for projects...
 Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/mojo/exec-maven-plugin/3.5.0/exec-maven-plugin-3.5.0.pom
 Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/mojo/exec-maven-plugin/3.5.0/exec-maven-plugin-3.5.0.pom (14 kB at 23 kB/s)
@@ -314,9 +310,7 @@ Downloading from central: https://repo.maven.apache.org/maven2/org/junit/junit/4
 [ERROR] Re-run Maven using the -X switch to enable full debug logging.
 [ERROR]
 [ERROR] For more information about the errors and possible solutions, please read the following articles:
-[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/DependencyResolutionException
-PS C:\Users\ASUS\JavaMongoDB\mongodb-demo> $env:MONGODB_URI = "mongodb+srv://2024pceacspreksha126_db_user:i97MZ&tw@ev2Vt7@cluster0.35fwt2e.mongodb.net/"
-PS C:\Users\ASUS\JavaMongoDB\mongodb-demo> mvn clean compile exec:java "-Dexec.mainClass=com.example.App"
+
 [INFO] Scanning for projects...
 [INFO]
 [INFO] ----------------------< com.example:mongodb-demo >----------------------
@@ -375,9 +369,7 @@ Connection failed: The connection string contains invalid user information. If t
 [INFO] ------------------------------------------------------------------------
 [INFO] Total time:  6.010 s
 [INFO] Finished at: 2026-10-13T09:43:37+05:30
-[INFO] ------------------------------------------------------------------------
-PS C:\Users\ASUS\JavaMongoDB\mongodb-demo> $env:MONGODB_URI = "mongodb+srv://2024pceacspreksha126_db_user:i97MZ%26tw%40ev2Vt7%40cluster0.35fwt2e.mongodb.net/"
-PS C:\Users\ASUS\JavaMongoDB\mongodb-demo> mvn compile exec:java "-Dexec.mainClass=com.example.App"
+
 [INFO] Scanning for projects...
 [INFO]
 [INFO] ----------------------< com.example:mongodb-demo >----------------------
@@ -400,9 +392,7 @@ Connection failed: The connection string contains an invalid host and port. The 
 [INFO] ------------------------------------------------------------------------
 [INFO] Total time:  1.967 s
 [INFO] Finished at: 2026-10-13T09:46:27+05:30
-[INFO] ------------------------------------------------------------------------
-PS C:\Users\ASUS\JavaMongoDB\mongodb-demo> $env:MONGODB_URI = "mongodb+srv://2024pceacspreksha126_db_user:i97MZ%26tw%40ev2Vt7@cluster0.35fwt2e.mongodb.net/"
-PS C:\Users\ASUS\JavaMongoDB\mongodb-demo> mvn compile exec:java "-Dexec.mainClass=com.example.App"
+
 [INFO] Scanning for projects...
 [INFO]
 [INFO] ----------------------< com.example:mongodb-demo >----------------------
